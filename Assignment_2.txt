@@ -1,0 +1,85 @@
+package model;
+public class CareerExpert {
+    public String getAdvice(String qualification) {
+        if (qualification.equalsIgnoreCase("be")) {
+            return "Consider taking the DAC course.";
+        }
+        // Add more conditions as needed
+        return "Bhai Aaram karo";
+    }
+}
+--------------------------------------------------------------
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+<h2>Career Advice:</h2>
+${requestScope.advice}
+</body>
+</html>
+
+--------------------------------------------------------------
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import model.CareerExpert;
+
+import java.io.IOException;
+
+/**
+ * Servlet implementation class CareerServ
+ */
+public class CareerServ extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		 String qualification = request.getParameter("qualification");
+
+	        // Invoke CareerExpert
+	        CareerExpert expert = new CareerExpert();
+	        String advice = expert.getAdvice(qualification);
+
+	        // Store advice in request attribute
+	        request.setAttribute("advice", advice);
+
+	        // Forward the request to CareerDetails.jsp
+	        RequestDispatcher dispatcher = request.getRequestDispatcher("CareerDetails.jsp");
+	        dispatcher.forward(request, response);
+	}
+
+}
+--------------------------------------------------------------
+form.html
+--------------------------------------------------------------
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qualification Form</title>
+</head>
+<body>
+
+    <form action="CareerServ" method="get">
+        <label for="qualification">Enter Qualification:</label>
+        <input type="text" name="qualification">
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+
+</body>
+</html>
+--------------------------------------------------------------
