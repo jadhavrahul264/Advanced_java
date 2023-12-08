@@ -1,0 +1,331 @@
+8:12 wed 
+
+Starters- Design patterns - structural design patterns - Adapter pattern 
+
+sir's file info - converts interface of a class into another interface that client expects.Adapter lets classes work together that couldn't otherwise because of incompatible interfaces.
+
+      source     -----------Adapter------------>    destination 
+
+destination expects source in some form which destination doesn't expect. someone will change the form of source to be compatible for destination.That someone is Adapter. Adpater can be implemented by two ways - 1)is-a and 2)has-a (black-box reuse) 
+
+1) Inheritance - Adapter pattern using (is-a) inheritance 
+	example - CylindricalSocket(supply() method) class is base class and RectangularAdapter(adapt() method) which extends base class and we have RectangularPlug(getpower() method) . 
+
+    plug(get power())  -------------------> socket (adapt()) ------------> supply() 
+drawback - if parent changes , child breaks (has to recompile the code)
+
+2) composition- example - 
+
+drawback() - loose coupling not possible because it is program to implementation and not programto interface
+
+  a)  composition - Socket interface will have more implementations and can have program to interface.
+
+    Q. where it is used in JAVA API? - java.io.InputStreamReader(InputStream)(returns a Reader) 
+      destination <------------  InputStreamReader reads bytes and decodes them into characters       <-----------------  source
+
+ --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Day 5 - Standard Actions - useBean 
+
+	useBean standard Action is used to invoke or access "POJO class" or "JavaBean" from a JSP.
+
+create a dynamic project - copy userbean1 folder myclass inside webapp and create a package 'beanpack' and paste myclass file inside it and run it 
+------------------------------------------------------------------------------------------
+UseBean1
+jsp - classMyClass - 
+<jsp:useBean id='ob1' class='beanpack.Myclass'/>
+reference or handle is given by id, class - inside this class will searched inside given package and class gets loaded and instantiated 
+then <%=ob1.disp()%>
+
+
+1)<jsp:useBean id='ob1' scope='page' class='beanpack.Myclass'/>
+internally - <%pageContext.setAttribute("ob1",new beanpack.MyClass())%>
+ 
+
+2)<jsp:userBean id='ob1' scope='request' class='beanpack.MyClass'/>
+internally <%request.setAttribute(ob1,new beanpack.MyClass())%>
+
+ 
+<%=ob1.disp()%>  
+internally this will be - 
+<% beanpack.MyClass ref=(beanpack.MyClass) pageContext.getAttribute("ob1");
+ref.disp();
+%>
+------------------------------------------------------------------------------------
+userBean 2 -
+
+<jsp:useBean id='xy' class='beanpack.MyClass1'/>
+but in this case we have get setter and getter how to call 
+<%xy.SetNum(100);%>
+<%xy.getNum()%>
+not recommended above 
+use this - <jsp:setProperty name='xy' property="num" value="200"/> standard action - setProperty and name must be similar to id. 
+Internally - SetProperty + property ="num" ----------- together will make container search for 'setNum" method
+
+get property 
+<jsp:getProperty name="xy" property="num"/>
+	getProperty+property ="num"--------- together  will make container search for "getNum" method 
+note - still we have to write "num" as it is N capital is also not allowed container will search for property internally - Write property="num".
+
+---------------------------------------------------------------------------------------------
+userBean 3
+
+          Html   -------------->     jsp      --------------------------->        java 
+accept name and age 	        pass param to java	     myclass2 - has name and age member variables 
+textfield - nm and ag         param='nm' and param='ag'
+
+eg.
+<jsp:setProperty name="ob1" property="name" param="nm"/>
+
+-----------------------------------------------------------------------------------------------
+note - what if we have 20 html textfields we need 20 setAttribute tag
+useBean 4
+If member varibles of java match with paramters of html(textfields) we use a shortcut <jsp:setProperty name='ob1' property='*'/>
+getProperty has no shortcut.
+
+-----------------------------------------------------------------------------------------------
+
+useBean with java objects -
+
+<jsp:setProperty name='ob1' property='list' value='<%=new Arraylist()%>'/>
+---------------------------------------------------------------------------------------------------
+
+Session Assignment -
+
+-----------------------------------------------------------------------------------------------------
+
+Day_6 - Expression language 
+EL info - required to get the values from various attriubutes as well as parameters. Null friendly - it will not throw NullPointerException.
+
+note - not for setting the value ? - why - reason - MVC architecture 
+modal - java bean , view - jsp and controller - servlet 
+view - not suppose to set at all by convection of mvc 
+servlet will set values.
+
+syntax - ${  } - this will get and print also 
+EL provides implicit objects 
+1) pagescope - to read page attributes 
+2) requestscope - to read request attributes 
+3) sessionScope - to read context attributes
+4) applicationScope - to read context attributes
+
+5) param - to read request paramters 
+
+
+All the EL implicits objects are implicitly maps.
+
+discussion -  prerequisite - attribute concepts
+
+<%request.setAttribute("Player","AB");%>
+<%=request.getAttribute("Player")%>
+
+El bolta hai stay away from java
+
+from EL point of view <%request.setAttribute("Player","AB");%>
+internally a map is created with name of requestScope - key="Player",value="AB"
+
+from EL point of view <%=request.getAttribute("Player")%>
+internally this will be performed , (EL form) ${requestScope.Player}
+----------------------------------------------------------------------------------
+${requestScope.Player}  
+pros & cons - more typing and faster - container not have to check all attributes 
+
+${Player}
+pros & cons - less typing and container will have to check all attributes and slow
+------------------------------------------------------------------------------------
+one more example-  
+HTML -JSP 
+
+HTML 
+	<input type=text name=uname/>
+
+JSP	
+	<%=request.getParameter("name")%>
+	${param.uname}
+
+when we want to access paramter this time i have to explicitly guide container using implicit object param otherwise it will search inside attributes.
+
+EL_2 - in url write ? sub - value 
+
+
+11:21
+EL_3 - In case of cookie there is difference.
+Cookie c=new Cookie("player","AB");
+response.addCookie(c);
+when we use  ${cookie.player} ,a cookie map is created containing player  is key but value is cookie class ka object mein store hain name = Player and value =AB
+${cookie.player.value} - El is invoking getter method of cookie class and access the value.
+
+
+--------------------------------------------------------------------------------------------------
+EL_4  --  when we have multiple values then paramvalues ka map banega and animal will be key and string array containing those mutliple values.
+${paramValues.animals[0]}
+${paramValues.animals[1]}
+
+imp Note - If EL doesn't give expected output we have to write this - <%@page isELIgnored="false"%> (please do not ignore my EL)
+---------------------------------------------------------------------------------------------------------
+JSTL - JSP standard Tag Library ---------<%@taglib uri="http://java.sun.com/jstl/core" prefix="d" %> This is mandantory to give for jstls
+it contains in built JSP tags.  add two jar files sir has provided 
+<%@taglib uri="http://java.sun.com/jstl/core" prefix="d" %>. taglib directive , uri - tag ka address , prefix-"d" whatever given here should be refere to access tag.
+uri - information of tag and prefix means those variables which are used afterwards to access tags.
+<d:forEach var="i" begin="1" end="15" step="1"> ${i}</d:forEach> write whole this line inside body tag of html
+jstl + El - deadly combination.
+-----------------------------------------------------------------------------------------------------------------------
+Jstl1.jsp and call jstl1.html 
+<c:forEach var="str" items="${paramValues.animals}">
+	${str}
+</c:forEach>
+
+in java same thing is 
+string arr[] = request.getParameterValues("animals");
+for(int i=0;i<arr.length;i++)
+{	
+	pw.println(arr[i]);
+}
+
+in my previous assignment 
+<%=session.getAttribute("mylist");
+<d:forEach var="str" items=${sessionScope.mylist}">
+	${str} 
+</d:forEach>
+
+in corejava
+list l=(list)session.getAttribute("mylist");  // remeber getAttribute returntype in object so need to typecase for handle
+Iterator itr=l.iterator();
+while(itr.hasNext())
+{
+	pw.println(itr.next());
+}
+
+--------------------------------------------------------------------------------------------
+jstl2 - 
+vector() - nongeneric vector
+from EL point of view - map is created requestScope myvect and vector object is created and inside that first,420 and true will be stored.
+
+-------------------------------------------------------------------------------------------
+jstl3 - call jstl3.html and jstl3 
+from EL point of view - 
+<c:choose>
+	<c:when test="${paramValues.animals[0] =='TIGER'}">
+		its a tiger
+	</c:when>
+	<c:when test="${paramValues.animals[0] =='LION'}">
+		it is a lion
+	</c:when>
+	<c:when test="${paramValues.animals[0] eq 'ELEPHANT'}">
+		it is Elephant
+	</c:when>
+	<c:otherwise>
+		invalid choice
+	</c:otherwise>
+</c:choose>
+
+one difference between choose tag and switchcase - no break here 
+and notice third when condition eq is used in place of == .
+
+-----------------------------------------------------------------------------------------------------------------
+jstl4
+<c:set var="level" scope="request" value="first class"/>
+the value for level is
+${requestScope.level}
+
+set tag is used to set attribute 
+
+	or
+
+<%request.setAttribute("level","first class");%>
+------------------------------------------------------------------------------------------------------------------
+jstl6
+<c:remove var="status" scope="request"/>
+
+	<br>
+	${status}
+this will remove the attribute - map will be deleted internally and after that nothing will be printed.
+
+----------------------------------------------------------------------------------------------------------------
+jstl7 tag - <%import url=""%>
+can import from outside of web container and more flexible 
+
+
+-----------------------------------------------------------------------------------------------------------
+jstl8
+
+
+------------------------------------------------------------------
+jstl9
+if we want to use URL rewriting 
+<% response.encodeURL("secondServlet");%>
+<d:url  tag is there to make use of it without using java code
+used to send sessionid with url encoded 
+
+------------------------------------------------------------------------
+url tag with jsp and someother.jsp
+
+url will append session id at the end of url and passed using hyperlink
+
+------------------------------------------------------------------------------------------
+jstl example folder - 
+we have created checkbox dynamically using only three line of code using for each loop
+
+
+--------------------------------------------------
+jstl- first_map
+internally - 
+
+list		PageScope
+	----------------------------
+        |          ------------     |
+	|myvar     | Enteries |     |
+	|          ------------     |
+	----------------------------
+
+inside pagescope we have entries and while iterating we will get each entry and using that iterating variable we are implicitly calling getkey() and getvalue()
+
+
+Assignments - JSP Assignments
+
+1) create a table "Product" with
+pid,pname,price,qty
+enter 5/6 records.
+	
+write a FirstServ which will retrieve all the records.
+while retrieving records it will create ArrayList and store only productnames inside it.
+This ArrayList should be now stored inside "request" attribute.
+
+FirstServ will now forward to Shop.jsp which will display all the product names using checkbox. [ use jstl here ]
+
+after selecting products when user will enter submit button ("add to cart"), control will go to SecondServ.
+
+SecondServ will get all the selected products, store them in ArrayList. Store this ArrayList inside session attribute.
+
+write a Bill.jsp will 
+retrieve session and ArrayList from it.
+display all the selected products using EL and Jstl.
+
+
+2) 3)	create a table in MySQL "student" with 
+	rollno int primary key
+	name varchar
+	age int
+	address varchar
+
+now create "Student.jsp"
+	accept
+		rollno
+		name
+		age
+		address
+
+	on submit control should go to "StudentServ".
+
+		"StudentServ" will get the request parameters and add a record in database.
+
+		this servlet also will query to the database
+"select rollno from student" 
+rollno retrieved from database will be added inside ArrayList.
+ArrayList will be stored inside "request" attribute and finally servlet will forward the request to "Report.jsp"
+
+"Report.jsp" will retrieve ArrayList from request attribute and display rollnos. here you have to use "forEach" tag of JSTL.
+
+
+
+
+			
