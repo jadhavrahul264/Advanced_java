@@ -1,0 +1,490 @@
+8:13 -  Day 10 and Day 11 Folder Jakarta EE 
+SOLID Principles
+1) S - single responsibility principle - class should have one and only one reason to change, meaning that class should have only one job to do.
+	Cohesion - low cohesion - write all code inside one class in point of view to run that code or multiple task is low cohesion
+				drawbacks - high maintenance, error prone,no reusablity.
+		   high cohesion -  class designed from point of view of single task.
+				drawbacks - low maintanence , reusablility 
+
+	example -
+public class AccountService
+{
+	fill account internal details
+	store account object in database
+	send welcome message 
+}
+
+above class is doing multiple tasks, even for single task whole class needs to be changed.
+note - repositery layer will handle database handling in spring 
+public class AccountService
+{
+	@Autowired
+	AccountRepositery repositery;
+	@Autowired
+	Accountnotification notification;
+	void openAccount()
+	{
+		filling details
+		respostiery.store()
+		notification.sendMessage()
+	}
+}
+
+public class AccountRepositery
+{
+	void store()
+	{
+		storing detials inside database
+		if database changes - only affects this class
+	}
+}
+
+public class AccountNotification
+{
+	void sendMessage()
+	{
+		send welcom message
+		whatsupp,email  - changes will be reflected here only for messages not in above two classes.
+	}
+}
+
+
+
+2) O - open Close principle - open for Extension and close for modification - classes.
+	Stop ourself from modifying existing code - which will cause bugs in existing code.
+	class Guiter launched working fine , after few months we thought that rock and roll will be more attractive to have with Guiter 
+	tempting to change the existing code, but can be errorprone.
+	instead of that, just extends the Guiter class SuperCoolGuitarwithFlames.
+
+one more example - calculator - add,subtract, multiply, divide 
+			one fine day - add some scientific functionality - 
+				developer go for extension - ScientificCalculator extends Calculator - sin , cos, tan
+----------------Dont disturb class just use it with added functionality-------------------------
+
+3) liskov Substitution principle - Barbara Liskov.
+	defines that objects of superclass(parent) shall be replacable with the objects of subclass without breaking the application.
+	**************Behaviour should be same , implementation can be different.***************************8
+	that requires objects of subclasses to behave in same way as our suprerclasses.
+
+example - FourWheeler - Start() and Stop()
+		Car - something different but behaviour same start() and stop()
+
+***********************Ovverride karo properly code *********change implementation - behaviour should be same*************
+
+4) interface segregation principle - unneccessary dont force clients to implement methods they dont use.
+	example - interface MouseAllListener - and 7 abstract methods 
+		now client want to use only some of it but still he has to implements all the methods . what is ths solution ?
+solution - Two different interface should be designed containing only methods required by client and those which client don't requires should be place in another.
+AWT - has these two MouseListner and MouseMotionListener
+
+
+5) dependency Inversion principle - High Level Class must no depend on Low level class 
+example - 
+	public class DataAccessLayer - addcustomer() logic - create object of file logger and calls log method.
+	here DataAccessLayer(container) is high level class and FileLogger(contained) is low level class 
+	tight coupling here.
+
+solution - interface logger and void log method
+implementations - FileLogger , ConsoleLogger, DatabaseLogger 
+class DataAccessLayer - while creating object of this class one has to pass Logger implementaion - traditional way 
+IOC way - 
+	public class DataAccessLayer
+	{
+		@Autowired
+		@Qualifier("filelogger");
+		private Logger logger;
+		methods....
+	}
+------------------------------------------------------------------------------8:46---------------------------------------------------------------------------------
+
+XML file issues - solution - delete multiple times and then run it.
+Day_10
+
+Method level Bean folder - IOC without XML (first time)
+	same yesterday's project 
+		mypack - main, MyBean, MyBean1, MyAppConfiguration 
+	Discussion - xml is not there then we have configuration class(alternate for  xml file)
+	1) MyAppConfiguarionClass - @Configuration - will make it configuration class - use to define one or more beans ---- call by IOC container
+		one method - @Bean - this method will return beanObject (MyBean class is returned so it will be treated as Bean)
+	2) MyBean - neither we have written @component or any bean tag in xml(no xml)
+	3) MyBean1 - for comparitive study - don't have impact on code because not written inside configuration class. @component - is used for scan to locate it
+	4) Main - 
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();- this class IOC Container used when no  xml file is used
+		context.scan("mypack");   // it will create all the objects in ready state.  @component check karega or any configuration class.
+		context.refresh();  // imp otherwise error. If above IOC container is created using no-arg contructor then compulsory to referesh().
+<--
+@org.springframework.context.annotation.AnnotationConfigApplicationContext@5f4da5c3 has not been refereshed yet -------------It is compulsory as far as spring 6 is considered.  -->
+		context.getBean(MyBean.class);
+		context.getBean(MyBean1.class); - ---------------
+
+note - Autowired - when to use ? - only main is using this example so no need to used autowiring because no object communication required in this example.
+		
+
+Comparitive study - all three 
+1) using "bean" tag in XML 
+	public class MyBean
+	{
+		code
+	}
+
+	in xml -
+	<bean id="mybean" class="mypack.MyBean"/>  -- IOC Continer will treat mybean class as bean 
+
+2) 	@component
+	public class MyBean
+	{
+		//some code
+	}
+	
+	inside xml
+	component-scan mypack
+
+c) 
+public class MyBean
+{
+	// some code
+}
+@Configuration -      -------------------------      this code is competitor for bean tag and component annotations.
+public class MyConfiguration
+{
+	@Bean - using bean on method and returns MyBean object -----we are treating MyBean as bean --- called by IOC Container automatically. keep object ready so when
+	public Mybean getBean()                                          we ask using getBean() we will get object from container.
+	{
+		return new MyBean();
+	}
+}
+
+-----------------------------------------------------------
+@Bean annotation info 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Number of ways to create IOC Application - 
+	First folder - 
+		1) student class - name age setter and getter 
+		2) student xml - bean tag - property setter injection - name and value
+		3) main - create object of ClassPathXmlApplicationContext("student.xml");
+			Student student = context.getBean("student",student.class)
+
+	second folder - 
+		1) student class - @component upon class 
+		2) xml of student - auto scan 
+		3) main code - same here 
+
+	third folder - 
+		1) student - @Component and @value upon each and every member - its like setter - @Value("MrIndia") upon private string name- this will be initialized.
+		2) same 
+		3) same 
+	
+	Fouth folder - 
+		1) student - @component but no XML
+		2) studentconfig - @componentScan(basePackages="mypack") -- please lookup for mypack classes for @component and himself @configuration
+		3) same main - 
+			AnnotationConfigApplicationContext(StudentConfig.class);
+			
+	fifth folder - 
+		1) student - no component simple class
+		2) studentconfig - IOc container invokes method annotated with @Bean so that means treated Student as bean. and getStudent is returning new Student();
+		3) Main - context.getBean("getStudent",Student.class);  -- method ka naam - getStudent
+doubt - 1) getBean(MyBean.class) or getBean("getStudent",Student.class); --- overloaded method 
+	2) create new Employee class in mypack and inside studentConfig - public Employee getEmployee() - @Bean upon it and  inside main getBean(Employee.class)now run
+	
+	Sixth folder - 
+		1) Engine - dispEngine() 
+		2) car - It has Constructor injection and Engine engine instance member 
+		3) carconfig - @Bean upon method - getEngine() and getCar() - both the class which will be returned  and considered as bean class.
+				inside car getCar() - Car c = new Car(getEngine()); and returned that c reference
+		4) main - context.getBean("getCar",Car.class); - ----- returns car object
+@bean if not written - NoSuchQualifyingBean - even if internally one method having @bean calls another method having @bean. still its requires @bean to internally inject. Its internal working.
+
+	Seven folder
+		1) Car - it has enginer and constructor injection
+		2) Engine same 
+		3) carconfig - @Bean(name={"car1","Car2"})
+				public car getCar() { new Car()}
+		4) main - context.getBean("car2",car.class); and context.getBean("car2");
+
+	Today's focus was - No Xml  - This is the Core - Spring Core. This is the Foundation 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Day 11 - AOP - Aspect oriented Programming - 
+	what is AOP - Cross Cutting Concerns - You have written some applications - some functions common for all classes Logger, security checker functions is required at mulitple places(different classes) these are called as cross cutting concerns.
+
+Discussion - 
+	void log(String message) 
+	{
+
+	}
+
+	void checkAuthentication(user,password)
+	{
+	
+	}
+
+In AOP, These methods which are reusable are know as cross-cutting concerns -- (in oops - reusable components).
+
+Even though these cross cutting concerns are conceptually seperate from business logic sometimes we embed it into business logic them together (lazy coding) 
+ application business logic - deposit money 
+while doing that authentication ka logic - is different from deposit ka logic so 
+
+
+void deposit() 
+{
+	Authentication logic -- cross cutting concern - but still embedded inside our business logic 
+	entire deposit logic 
+}
+	
+Aspect oriented programming helps separate these cross cutting concerns from the business logic.
+what is selling point for AOP because we can make two separate classes for both those(oops thinking) 
+
+AOP increases application's modularity and maintenance will be less.
+
+**** Business logic and cross cutting concerns - sir file ***************
+
+without AOP -  cross cutting concerns is tightly coupled with business logic 
+
+class Account
+{
+	void desposit(double amt)
+	{
+		.. deposit
+		.. transaction  --- cross cutting concern
+		.. logging    -------- cross cutting
+	}
+}
+
+created transaction , logging methohd inside another class and just call from our buiness logic code.
+another way SRP - one class each for transcation, logging , security.
+
+With AOP - 
+Class Account with only Deposit logic and withdraw logic 
+class transaction , class logging, class Security with respective logic
+
+inside spring bean configuration file - 
+	java mein kahin bhi nahi mention what we need logging or transaction , which cross cutting concerns to be required.
+
+	requirement should be written inside xml.
+	
+During runtime - IOC Container - proxied object will be created and sequence will be decided depending upon instructions. here deposit and withdraw method
+Main function - will called getBean("account" ) - It will be provided with proxy object.
+
+	real object --------------------->  proxy object -----------------------------> main
+
+--------------------------------------------------------------------------11:09-------------------------------------------------------------------------------------
+
+Inside main - we will make changes in xml and proxy object will be created with required  concerns with business logic and that object will be accessible inside main.
+
+cross cutting concerns , Aspect - name for that cross cutting concern , Advice is implementation of that aspect(logic). 
+various kinds of Advice - what is advice - implementation of that aspect(logic). 
+
+	1) Before - the advice functionality takes place before the advise method(target method) is invoked.
+	2) After - 
+	3) after returning- advice funcationality successfully returns.
+	4) After throwing -
+	5) Around
+--------------------------------------------------------------------------------------------------
+Advice	Description
+before	: Run advice before the method execution.
+after	: Run advice after the method execution regardless of its outcome.
+after-returning	: Run advice after the method execution only if method completes successfully.
+after-throwing	: Run advice after the method execution only if method exits by throwing an exception.
+around	: Run advice before and after the advised method is invoked.
+---------------------------------------------------------------------------------------------------
+
+Explaination - 
+suppose  we have cross cutting concern
+	void log(String message)
+	{
+		//some code
+	}
+	
+application code
+public class Account
+{
+	setAmount(amount)
+	setCustomer(customer)
+	setBalance(balance)
+}
+
+**joint point - If i specify that :-
+		"log" concern should be applied with "setAmount" 
+		"log" concern should be applied with "setCustomer" 
+		"log" concern should be applied with "setBalance" 
+
+where should concern should be application exaclty in application. Log should be applied with set* this is repetitive. we want specific concern should be applied to multiple points so use shortcut - 
+**pointcut -"log" concern should be applied with "set******" methods.
+
+---------------------------------------------------
+
+Example - perspective - java
+	create new project java - "AOP"
+		inside mypack all the java files and inside src place the xml file 
+			convert to maven project and add dependencies.
+				run the main
+				
+Discussion - 
+1) Product - interface with abstract method multiply - a,b parameters
+2) ProductImpl - multiply method - for AOP language - Target Class - Proxy will be performed on this class and multiply is advised method and on which we are going to implement advice. multiply - advised method.
+3) LogBeforeCall - These are Advice - Before - Advice functionality should take place before 
+		public class LogBEforeCall impleents MethodBeforeAdvice -- should implements this for Before advice 
+				has before(Method method , Object[] os, object o) method 
+		three parameters - Method method - method being invoked 
+					object[] os -arguments to method multiply- all with different types can be passed.
+					o -target of method invocation. May be null (static method).
+
+
+Discussion - 
+class productimpl implements Product 
+{
+	public int muliply(int a,int b )
+	{
+		return a*b;
+	}
+}
+
+main()-
+productimpl p = new proudctimpl();
+p.muliptly(100,200);   // 
+Method - multiply , p - target of method invocation , arguments - 100,200.
+
+
+4) LogAfterReturning  - should implements AfterReturning 
+			method - afterReturning(object o, Method m, Object[] os, object o1)
+				here first object is returned object.
+5) LogAround - implements MethodInterceptor  -- it will come before as well as after returning value.
+			method - public object invoke(MethodInvocation mi) throws Throwable
+		Logic inside this - before control goes to multiply - it will check arguments and then check if both are zero then exception otherwise control goes to multiply and it returns value on this line ---  Object result = mi.proceed(); now return result to client. mi should have information of particular method.
+6) appdemo xml - heart and soal - spring bean configuration file -
+ 	we are declaring three classes as bean with id's .
+	we are declaring target class - on which proxy will be created by IOC container
+	for creating proxy by using this information 
+	<bean id='product' class ="ProxyFactoryBean">
+	<property name="target">
+		<ref bean="productimpl"/>
+	</property>
+	inside the class we should have interceptors setter with list as paramtere 
+	interceptors to apply- advices implements  
+	<property name="interceptorNames">
+        <list>
+            <value>beforeCall</value>
+            <value>aroundCall</value>
+	    <value>afterCall</value>
+         </list>
+     </property>
+	proxy class should implements proxyInterfaces. why this ? client should hold interface and inside that interface proxy should be there.
+     <property name="proxyInterfaces">
+         <value>mypack.Product</value>
+     </property>
+
+7) main - 
+		ApplicationContext -- IOC container - It will do all instructions inside Xml including proxy
+		ac.getBean("Product") -- returns Product - looks like getting product class reference but internally getting proxy reference.
+		new product().multiply();
+	sequence of execution - 
+		<list>  sequence of advices.
+            <value>beforeCall</value>
+            <value>aroundCall</value>
+	    <value>afterCall</value>
+         	</list>
+	Beforecall will get executed first and then around and then aftercall. this is convention. follow this
+		we can also alter the sequence of this example 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+with Selected methods - we get to see multiple  methods -
+1) Product - two contracts - mutliply and display - interesting which advice on which method
+2) productimpl - implementation of above
+3) 
+4) 
+5)
+6) why three configuration files - three different scenario's -
+7) spring_configuration_1 - it will apply beforecall to only method method - 
+all beans are declared and inside pointcut - productpointcut is refers to method multiply.
+advice is supposed to give advice what advice ? - ProductPointcut should be applied BeforeCall
+proxy preparation - target class implementation, list of advisor- please ask Advisor, and then interface.
+8) main - 
+
+9) spring_configuration_2 - advices , implementation class defined 
+			productpointcut - value="*" - it means all the methods
+			Advisor - before call on productpointcut --- this means before() should be called before all the methods. - two times call before each methods.
+10) spring_configuration_3 - pointcut1 - multiply and pointcut2 - to all methods
+				Advisor1 - before should applied to multiply
+				Advisor2 - after should applied to after
+		****************phone call distraction - 
+--------------------------------------------------------------------12:58--------------------------------------------------------------------------------------------
+
+Now without Xml 
+AOP with Annotations - Maven Dependencies have some changes. Let's see
+
+First Folder - create new project  - "AOP"
+		inside mypack - sample, Main, sampleAspect 
+		springbeanconfiguration file in src
+-----------------------------------------------
+Discussion - 
+First folder - 
+1) sample - @component - given means bean not in xml, here sample has three display methods 1,2 and 3.
+2) xml - two things - a) componnent scan base-package="mypack"
+			b) proxy preparations bean class based on annotataions.
+3) sampleAspect - most imp -- @Aspect - Is an Aspect - Component bhi hai so object should be created. 
+	@Pointcut("execution(* Sample.*(..))")  -- syntax for pointcut. find out from net open book.
+	public void beforepointcut(){}
+	
+	@Before("beforepointcut()") // applying pointcut on before advice
+	public void myadvice(joinPoint jp)  // to whom joinpoint is applied on - so joinpoint ref is as paramter of advice.
+	{
+		sop // concern logic
+	}
+
+4) main - iOc conatiner is created and have xml as paramter. inside that xml we have instruction to scan and whenever to create proxy take help from that AnnotationAwareaspect...     
+             ref.getBean("sample");
+Note - In which class we do settings (sampleAspect) - should be Aspect class ----@Aspect.
+------------------------------------------------
+Second folder - 
+1) xml same 
+2) Sample - @component - displ public , disp2 and disp3 are default.
+3) sample1 - fun1 and fun2 - public 
+4) SampleAspect - 
+		@Pointcut("execution(public * *(..))") -- all the public methods of all the classes to be pointcut. before statement will be for fun2 and disp1
+		@Before("method name of pointcut") -- applying pointcut on before advice. before method should be applied on myadvice 
+		public void advice(joinpoint jp){ concern logic}
+-----------------------------------------------------------
+Third folder - 
+direct sampleAspect - @pointcut("execution(* *(..))") --- all the methods of all the classes to be pointcut.
+			@Before() ---  applying pointcut on before advice
+
+--------------------------------------------------------------
+Fourth folder - 
+info- Before advice for public methods of all sample class only
+	@Pointcut("exectuion(public * Sample.*(..))");
+
+---------------------------------------------------------------
+Fifth folder - 
+info - Before advice for setter methods of only sample class.
+               SampleAspect - @Pointcut("execution(* sample.set*(..))")
+
+same till now myadvice ka code 
+------------------------------------------------------------------
+Sixth info - Before advice for setters method of all classes 
+		@Pointcut("execution(* set*(..))")
+same myadvice logic
+------------------------------------------------------------------
+seventh info - Before advice for setters of sample only 
+		after advice for getters of all the classes
+
+		@Pointcut("execution(* Sample.set*(..))")
+		@Pointcut("execution(* get*(..))")
+		now two advisors 
+		@Before()first for beforepointcut() - before should be applied with all setters of sample.
+		@After()second for afterpointcut() - after should be applied with getter method of all the classes.
+			
+-------------------------------------------------------------------
+Eight info -- Around advice for tostring methods of all the classes.and other two requirements are same as above 
+		@Pointcut("execution(* to*(..))");
+		@Around("aroundpointcut())- -- Around should be applied to only tostring methods of all the classes.
+		this method has paramtere ProceedingJoinPoint pjp ---   sop and inside logic of this method- object obj = pjp.proceed(); and return obj;
+		pjp should have information about tostring method.
+---------------------------------------------------------------------------------1:42-------------------------------------------------------------------------
+day 11 - Templates - tomorrow - no design patterns and design principles and tommorrow main topic mvc.
+	
+		
+		
+
+	
