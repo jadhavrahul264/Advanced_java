@@ -1,0 +1,369 @@
+8:20
+what is Spring Templates - How spring templates removes boilerplate codes.[Boilerplate Reduction]
+
+Templates folder -- DAO - we will do not waste time here template.
+
+NO demo - HibernateTemplate Depricated 
+
+----------------------------------------------------------------------------------------------
+Introduction to DAO templates - departmental store example - other departments AOP,DAO, MVC, Web, Web Services 
+Today we are visiting one more departmental store - DAO 
+
+Spring DAO - supports some templates -  e.g. JDBCTemplate, HibernateTemplate, etc.
+
+Main purpose - Boilerplate reduction.
+
+client ---------------------> template ---------------------------------> database 
+
+client - get DataAccessException(unchecked exception) through template (get sql exception from database). So client need not handle or declare,focus on logic not on try catch finally.
+
+Example - JDBC Template info folder
+			--> without JDBC template folder
+
+Discussion - 
+1) customer class - customerid, custname, custaddress , setters and getters
+2) CustomerDAO - interface with method insertCustomer(Customer cust) ----- DAO decouples business layer from persistance layer
+3) CustomerDAOimpl - private Datasource source
+			connection con = source.getConnection
+			and we have setDatasource(Datasource source){this.source=source} and string query and prepareStatment.
+		Note - for close method we have to write try --catch 
+	spring says - these are all boilerplate code (repetitive code) , redundant code.
+4) Context.xml - <bean id="datasource" destroy-method="close" class="...BasicDataSource"
+			setters for driverclassname, url, n=username,password
+	<bean id="customerDAO" class="mypack.CustomerDAOimpl">
+		<property name = "datasource" ref="datasource"/>  ----- setDatasource setter will be called and datasource ref will be passed.
+	</bean>
+				
+5) main - create IOC container and get Customer object and use its methods.
+
+
+JDBC template 1 - 
+1) Customer - 
+2) CustomerDAO - interface with two abstract methods - insertCustomers(Customer cust) and ViewCustomers()
+3) impl - JDBC template has to be imported. and have instance member as JdbcTemplate ref.
+		and     setDataSource(Datasource source)
+			{
+				jdbcTemplate = new JdbcTemplate(source);  -- same work for IOC container we are creating object of JdbcTemplate.
+			}
+	insertCustomer method only has one method of update(query, new Object[]{customer.getCustomerid, ...})
+	{}
+
+	 viewcustomers - We are firing seleect query to get all the  records 
+		we have created an ArrayList
+		while traversing from the resultSet.
+			we create an object of customer and initialize its members with the ResultSet Values.
+			we add that object inside ArrayList
+		like that those many objects will be created with respect to number of records and added inside ArrayList
+
+		At the end of ResultSet loop, our ArrayList will be ready with customer objects.
+
+without templates - 
+	List<Customer> mylist = new ArrayList<>();
+	Resultset s = result.executeQuery("select * from customer");
+	while(rs.next())
+	{
+		mylist.add(new Customer(rs.getInt(1),rs.getString(2),rs.getString(3));
+	}
+	S.O.P(mylist);
+
+using template - 
+	ArrayList - 
+	jdbcTemplate has queryforObject(query, RowMapper ka impl) and RowMapper ka implemention has method mapRow(resultset,int rowNum)
+			logic - crete new ArrayList().dowhile loop and fetching values from database and add in our ArrayList
+	who will call mapRow ? - maprow will be call by queryforobject of jdbcTemplate.
+		queryforobject will execute query first and i have resultset ,then using that resultset will be passed while calling maprow
+		why do while()? - rs.next() - boolean returntype so used for checking of presentness of data - next() is called for one time so next time inside maprow do while is used.
+
+	advantage - no try catch, no finally only query and template.
+
+queryforobjectflow - ppt(lab)
+
+This code assumes that records are there.
+if no resultset - EmptyResultDataAccessException. - given by queryobject which didn't find record after performing next() on resultset.
+
+--------------------------------------------------------------------------------------------------
+create new project - "jdbcTemplate" perspective java
+	
+	-> "mypack" package - customer, customerDAO, CustomerDAOimp, main
+		
+		-> Context.xml in src folder with changes 
+			
+			-> dependencies - pom for all jdbc dependencies
+			
+				-> run
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hibernate Template - 
+without hibernate Template - difficulties
+
+1) HibernateUtil -- session factory created - and getsessionfactory - static method which will return sessionfactory
+
+2) main - getsesionFactory().openSession()
+		- begin transcation 
+			- session.save() 
+				transaction commit()
+
+Hibernate template demo - depricated.
+
+1) applicationcontext xml -  sessionfactory bean is created by IOC container - we are passing datasource and hibernateProperties.
+                             TransactionManager
+2) EmployeeDAOimpl - @Transactional
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Day 12 ------------welcome to world of WEB-----------------------9:36
+*****************************Spring MVC with Spring Boot*********************************************
+
+visting one more department(Spring MVC) from departmental store 
+
+
+-MVC based Frameworks - skeleton , rules to follow - on top of that we write our specific functionality.
+		1)struts 
+		2)spring mvc
+		3)JSF [ Java Server Faces ]
+All above are of java framework - other two are not there now only spring mvc is there in Industry.
+
+<------------------when we know core MVC [ Core MVC is the one where we develop Model, View and Controller ] --------------------------------->
+	
+what so special about this spring mvc? - folder - why MVC based framework -
+->  We have controllers , client should not design controller.
+	we have to create forms and model, jsp. 
+	how requirement will be fulfilled by spring controller - It is flexible. write in XML or annotations. and controller will read that xml or annotations.
+	this is common among all java Framework struts, springMVC, JSF.
+
+core MVC solves most of problems faced in model1 architecture - high maintaince and no reusabality.
+	now when volume of application is large(so many forms[htmls] , javbeans and view components(jsps or thymeleaf), your controller will become overloaded[lot of if else and tomorrow requirement changes i have to change this controller].
+
+ppt why MVC based framework -(lab)
+
+---------------------------------------------------------------------------------
+Spring MVC Framework Architecture - 
+
+client ----request-----> Dispatcher Servlet --------------Handler Mapping(xml or annotations)
+				DS	    ----------------> controller
+				DS         <----------ModelandView -- controller    --- gives out data and view to which to forward.
+				DS        ----------------------->   view Resolver
+				DS          ---------------------> view[jsp] 
+			
+request from client goes to --> 			 
+
+1) Dispatcher Servlet - acts as front controller.  war mein sabse age hum khade. Inbuilt Servlet of spring MVC   --- >
+
+2) Handler mapping - Xml or annotations (workflow)   ---> 
+	
+3) Controller - this is our controller - CURD operations wala. Tour controller  ---> 
+
+4) ModelAndView - combination of data and view - our controller gives this to dispatcher servlet. for information about data to be displayed and view to be forwarded.
+
+5)ViewResolver - helps dispatcher servlet in finding views.
+
+6)view - finally reaches to view . forwarded to particular view[JSPs]
+
+**************how to write controller - java class with a logic, main controller  will be dispatch servlet which will handle flow of MVC. we can say our controller is acting like model.
+
+and so dispatch servlet should be first one to occurs- so load on startup - configure it.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+10:13 -
+First handson 
+	folder - first with jsp without spring boot 1 
+		Farewell eclipse last time 
+			perspective java EE
+				file new dynamic web project - "MVC_1"
+					no need to generate web.xml ---sir will provide
+						package - mypack
+							inside that place files - Book, BookNewController
+								inside webapp - bookNew.jsp , success.jsp
+									inside weinf - both xml
+
+								convert to maven project 
+									copy paste maven dependencies
+
+								write click on project 
+									run as server.
+								observe the output
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+After the break- 11:11
+
+Working of above - 
+1) Web.xml - (DD)--  Welcome file list - booknew.jsp - execution begin from booknew.jsp , entry - <servlet> - we have to write - bookdisptacher 
+	<servlet-class>
+	<servlet-name>bookdispatcher</servlet-name> ----  rule for this since we have given servlet name as bookdispatcher so spring bean configuration name has to be 																		bookdispatcher-servlet.xml
+	<load-on-startup>1</load-on-startup>
+	<url-pattern>/</url-pattern> -- whenever our url pattern "/anything", dispatcher servlet comes into pitcher. 
+						"/DS" - dispatcher servlet comes into picture only once 
+	<context:component-scan basepackage="mypack"/>
+	
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+	<property name="prefix" value="/"/>     
+	<property name="suffix" value=".jsp"/>
+	</bean>
+	This is ViewResolver - helps in finding view 
+
+	prefix="/" and suffix=".jsp" means when we just say "add" ----- automatically "add.jsp" will be called.
+
+Note - in eclipse / means webapp folder base location.
+
+Note - in spring we dont create servlet.
+2) bookNew.jsp - form action="book" method=post.  -- textfield - bname, price
+
+3) bookNewController - @controller - will make this as controller 
+		@postMapping("book") --- we want this method to accept the post action of form
+		public String afterSubmit(@RequestParam("bname") String name, @RequestParam("price") long price,Model model)  ----  automatically 
+		vs     same thing in servlet is like this.
+		servlet - String name = request.getParameter("bname");  and Long Bookprice = long.parseLong(request.getParameter("price"));
+		what is third Model paramter - API.
+
+		book book = new Book();
+		book.setBookName(name);
+		book.setPrice(bookprice);
+		model.addattribute("mybook",book);   -- this  is request attribute internally. request.setAttribute("mybook",book);
+		return "success";  ----  return type string for most of time in case of post.  This will be taken to viewResolver and then prefix and suffix will be added  and success.jsp will be searched from there.
+
+4) success - this will display ${mybook.bookname} and then finally hyperlink back to bookNew.jsp.
+
+
+flow - Web.xml - welcome file  BookNew.jsp - from there we post some values and client hit submit button , request will be forwarded to URL pattern / which means servlet dispatcher is there so load on startup and then dispatcher servlet inbuilt class will be invoked. here / will search inside WEBapp here we have @controller
+not values will be fetched and passed to success.jsp
+
+------------------------------------------------------------------------------------------------------------------
+
+In jsp 1 - form action ="book" method=post ------------------when click on submit --- http://localhost:/book
+
+		
+In jsp 1 - form action ="course" method=post ------------------when click on submit --- http://localhost:/course
+
+In jsp 1 - form action ="student" method=post ------------------when click on submit --- http://localhost:/student 
+
+for common for all we  have url-pattern will be only / instead of /book or /student or /course.
+so Dispatcher servlet will comes into pitcher for any action. 
+form action ="book"  ---- somewhere  written postmapping written controller class
+method - same as request setting interface.  if we want we can ignore the method parameter and can take HttpServletRequest request as parameter.
+we can take any servlet API as our parameter to use. using above we can have request.setAttribute("mybook", book);
+
+------------------------------------------------------------------------------------------------------------------------
+
+Second example - same hain but twist hain
+first with jsp without spring 2
+	all steps same for creating project.
+
+1) web.xml - servlet ki entry - anything after servlet - dispatcher should come, welcome file - /book - this should be controller mein likha huan getmapping
+    in some or other controller we have written @GetMapping("book")
+2) This is written in BookNewController class - this is our welcome page -
+	@GetMapping("book")
+	public String before()
+	{
+		return "BookNew"  -- control goes to view resolver from here and this will make it BookNew.jsp
+	}
+3) inside BookNew - do not written action- so when say post - so will go inside same class from which it has previously visited. but go to @PostMapping
+   when to say action on this , if we want to go to another class PostMapping.
+
+4) from there success.jsp will be searched and set attributes and then -- hyperlink pe click - get mapping book should be there with @GetMapping("book").
+
+why such tedious task - when we will have requirement like - database driven pages write powerful HQL and then return list of objects inside some attributes and pass to view.
+
+
+---------------------------------------------12:55--------------------------------------------------------------------------------------------------------------
+Spring boot - It is a part of Spring. Something different 
+
+Main reason behind using springboot is :- 
+1) Configuration (in normal spring we have to do configuration) - lots of it to do.
+2) At least we have to write Dependencies tag inside it - pom.xml.
+
+there will be one stage - absolutely no pom.xml and less configurations - so we need SpringBoot.
+
+----------------------------------------------
+
+what is Spring Boot - 
+1)makes it easy to create standalone(main inside it) , production grade spring based applications that we can just run.
+2)It is not framework . It helps us to build package and deploy the spring application with minimal or no configuration. Our project will be based on Spring Boot.
+3)It creates standalone applications(main inside web applications).
+4)Webapplications can be delievered as a FAT-JAR file(one jar with lot of files) to run as standalone java Application.
+
+JAR - java Archive - .class files - compression utility in java which can run on any platform wherever there is java.
+WAR - Web Archive - war contains servlet, JSP and Html normally.
+
+Demo - How can we create web application which can be run on any given web container or web server?
+	suppose sir is developer with tomcat and eclipse - sir created an application and run there - 
+	tomorrow - another place no tomcat available, but somehow runned it
+	another place, and not same server as first one - somehow done it but with some difficulties.
+above scenario - tightly coupled with tomcat.
+
+We can create web application which can run on any given web container or web server by creating "war" file. [ as per Jakarata EE specifications ]
+and now this war file can run on any server.
+sir will act as developer first and then client.
+
+------sir as developer
+	create new dynamic project - myproject ---- TargetRuntime may be null or tomcat ----- generate web.xml --- 
+		create a servlet - "myserv" - doget - response.getWriter().println("hello from myserv");
+			create a jsp - "first" - hello there
+				pretends that we dont have server 
+			right click on project - export War - and then click on submit - war file created.
+		locate that file and we can deploy the war file to client 
+------ sir as client with tomcat
+	apache tomcat folder - webapps how many folder are there - five, 
+	startup in cmd - 
+	copy war in webapps folder this is called deployment - server should be on.
+	the moment it is paste a new folder with same name is created.
+
+on browser - https://localhost:8080/myproject/myserv --- observe the output 
+
+same as above, we can go to any server and easily run our war project.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Note- After download spring boot jar file , Double click on it will create a folder name sts-4.21.0
+Spring Boot Application - Spring tool suite - 4 use this till last and in project also.
+
+Spring MVC wiht Spring boot - First folder 
+	file ---  new ---spring starter project -- Dialog box - First , type - maven , group - com.example -- next
+			spring Boot Version - 3 we are using (3.1.7(snapshot)) 
+				Spring Web click on that , thymeleaf these --- two dependencies
+Error---
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
